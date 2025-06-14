@@ -4,13 +4,12 @@ import { TimerState } from './timerState';
 import { TimerDisplay } from './components/TimerDisplay';
 import { TimerControls } from './components/TimerControls';
 import { TimerSettings } from './components/TimerSettings';
+import { SessionModal } from './components/SessionModal';
 
 export const App: React.FC = () => {
   const [config, setConfig] = useState(new TimerConfig());
   const [remaining, setRemaining] = useState(0);
   const [currentCycle, setCurrentCycle] = useState(1);
-
-  // ここで「実行中フラグ」を管理
   const [isRunning, setIsRunning] = useState(false);
 
   const handleTick = (sec: number, cycle: number) => {
@@ -23,26 +22,53 @@ export const App: React.FC = () => {
       onTick: handleTick,
       onWorkStart: () => setIsRunning(true),
       onBreakStart: () => setIsRunning(true),
-      onCycleEnd: () => setIsRunning(false),
-      onPause: () => setIsRunning(false),   // ← 追加
-      onResume: () => setIsRunning(true),   // ← 追加
+      onCycleEnd: () => {
+        setIsRunning(false);
+        openModal();
+      },
+      onPause: () => setIsRunning(false),
+      onResume: () => setIsRunning(true),
     })
   );
 
+  // Modal state
+  const [isModalOpen, setModalOpen] = useState(false);
+  const openModal = () => setModalOpen(true);
+  const closeModal = () => setModalOpen(false);
+
+  // Save via preload API
+  const handleSave = async (title: string, tags: string[]) => {
+    await window.api.saveSession({
+      id: crypto.randomUUID(),
+      title,
+      started_at: new Date(),
+      ended_at: new Date(),
+      duration_minutes: Math.ceil(remaining),
+      tags
+    });
+    closeModal();
+  };
+
   return (
-    <div>
+    <div className="container mx-auto p-6">
+      <h1 className="text-2xl font-bold mb-4">FocusForge</h1>
       <TimerDisplay remainingSeconds={remaining} currentCycle={currentCycle} />
       <TimerControls
         isRunning={isRunning}
         onStart={() => timer.start()}
         onPause={() => timer.pause()}
         onResume={() => timer.resume()}
-        onReset={() => {
-          timer.reset();
-          setIsRunning(false);
-        }}
+        onReset={() => timer.reset()}
       />
-      <TimerSettings config={config} onChange={setConfig} />
+      <div className="mt-6">
+        <h2 className="text-xl font-semibold mb-2">Settings</h2>
+        <TimerSettings config={config} onChange={setConfig} />
+      </div>
+      <SessionModal
+        isOpen={isModalOpen}
+        onClose={closeModal}
+        onSave={handleSave}
+      />
     </div>
   );
 };

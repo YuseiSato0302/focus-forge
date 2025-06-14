@@ -10,7 +10,7 @@ export interface WorkSession {
     started_at: Date;
     ended_at: Date;
     duration_minutes: number;
-    /** 保存時刻 (DBのcreated_at) */
+    tags: string[];
     created_at?: Date;
 }
 
@@ -21,6 +21,7 @@ type Row = {
     started_at: string;
     ended_at: string;
     duration_minutes: number;
+    tags: string;
     created_at: string;
 };
 
@@ -40,6 +41,7 @@ export async function getDb(filename: string): Promise<Database> {
             started_at DATETIME,
             ended_at DATETIME,
             duration_minutes INTEGER,
+            tags TEXT,
             created_at DATETIME DEFAULT (datetime('now'))
         );`
     );
@@ -50,35 +52,45 @@ export async function getDb(filename: string): Promise<Database> {
  * セッションを work_sessions テーブルに保存する
  */
 export async function saveSession(db: Database, session: WorkSession): Promise<void> {
-    await db.run(
-        `INSERT INTO work_sessions (id, title, started_at, ended_at, duration_minutes)
-         VALUES (?, ?, ?, ?, ?)`,
-        session.id,
-        session.title,
-        session.started_at.toISOString(),
-        session.ended_at.toISOString(),
-        session.duration_minutes
-    );
+  // session.tags が配列かどうかもチェック
+  const tagsToSave = Array.isArray(session.tags) && session.tags.length > 0
+    ? session.tags
+    : ['未選択'];
+
+  await db.run(
+    `INSERT INTO work_sessions (id, title, started_at, ended_at, duration_minutes, tags)
+     VALUES (?, ?, ?, ?, ?, ?)`,
+    session.id,
+    session.title,
+    session.started_at.toISOString(),
+    session.ended_at.toISOString(),
+    session.duration_minutes,
+    JSON.stringify(tagsToSave)
+  );
 }
 
 /**
  * work_sessions テーブルからセッションを取得する
- * created_at の降順 (最新順)
+ * 最新順 (rowid 降順)
  */
 export async function listSessions(db: Database): Promise<WorkSession[]> {
-    // 全ての行を取得（型定義が一致しない場合はキャストでRow[]とみなす）
     const rowsRaw = await db.all(
-    `SELECT id, title, started_at, ended_at, duration_minutes, created_at
-     FROM work_sessions
-     ORDER BY rowid DESC`
-  );
+        `SELECT id, title, started_at, ended_at, duration_minutes, tags, created_at
+         FROM work_sessions
+         ORDER BY rowid DESC`
+    );
     const rows = rowsRaw as Row[];
-    return rows.map(r => ({
-        id: r.id,
-        title: r.title,
-        started_at: new Date(r.started_at),
-        ended_at: new Date(r.ended_at),
-        duration_minutes: r.duration_minutes,
-        created_at: new Date(r.created_at),
-    }));
+    return rows.map(r => {
+        const parsedTags: string[] = JSON.parse(r.tags);
+        const tagsArray = parsedTags.length > 0 ? parsedTags : ['未選択'];
+        return {
+            id: r.id,
+            title: r.title,
+            started_at: new Date(r.started_at),
+            ended_at: new Date(r.ended_at),
+            duration_minutes: r.duration_minutes,
+            tags: tagsArray,
+            created_at: new Date(r.created_at),
+        };
+    });
 }
