@@ -6,13 +6,17 @@ export type TimerCallbacks = {
   onWorkStart?: (cycle: number) => void;
   onBreakStart?: (cycle: number) => void;
   onCycleEnd?: (cycle: number) => void;
+  onPause?: () => void;
+  onResume?: () => void;
 };
 
 export class TimerState {
   private config: TimerConfig;
   private callbacks: TimerCallbacks;
+
   private currentCycle!: number;
-  private phase!: 'idle' | 'work' | 'break' | 'paused';
+  private phase!: 'idle' | 'work' | 'break' | 'paused'; 
+  private prevPhase: 'work' | 'break' | null = null;
   private remainingSeconds!: number;
   private intervalId: NodeJS.Timeout | null = null;
 
@@ -21,7 +25,7 @@ export class TimerState {
     this.callbacks = callbacks;
     this.reset();
   }
-
+  
   start(): void {
     if (this.intervalId) return;
     this.reset();
@@ -32,17 +36,26 @@ export class TimerState {
     if (this.intervalId) {
       clearInterval(this.intervalId);
       this.intervalId = null;
+      if (this.phase === 'work' || this.phase === 'break') {
+        this.prevPhase = this.phase;
+      }
       this.phase = 'paused';
+      this.callbacks.onPause?.();
     }
   }
 
   resume(): void {
     if (this.intervalId || this.phase === 'idle') return;
-    if (this.phase === 'work') {
-      this.runWorkTicker();
-    } else if (this.phase === 'break') {
-      this.runBreakTicker();
+    if (this.phase === 'paused' && this.prevPhase) {
+      if (this.prevPhase === 'work') {
+        this.phase = 'work';
+        this.runWorkTicker();
+      } else {
+        this.phase = 'break';
+        this.runBreakTicker();
+      }
     }
+    this.callbacks.onResume?.();
   }
 
   reset(): void {

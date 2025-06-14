@@ -1,15 +1,15 @@
 {
   "name": "focus-forge",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "dist/src/main.js",
   "directories": {
     "test": "tests"
   },
   "scripts": {
     "start": "npm run build && electron .",
-    "build": "tsc",
+    "build": "tsc && cp src/index.html dist/src/index.html && esbuild src/index.tsx --bundle --outfile=dist/src/index.js --platform=browser --format=esm",
     "test:unit": "jest",
-    "test:e2e": "playwright test",
+    "test:e2e": "npm run build && playwright test",
     "test": "npm run test:unit && npm run test:e2e"
   },
   "keywords": [],
@@ -18,11 +18,25 @@
   "description": "",
   "devDependencies": {
     "@playwright/test": "^1.52.0",
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.3.0",
     "@types/electron": "^1.6.12",
     "@types/jest": "^29.5.14",
+    "@types/node": "^24.0.1",
+    "@types/react": "^19.1.8",
+    "@types/react-dom": "^19.1.6",
+    "@types/testing-library__react": "^10.2.0",
     "electron": "^36.4.0",
+    "esbuild": "^0.25.5",
     "jest": "^29.7.0",
+    "jest-environment-jsdom": "^30.0.0",
     "playwright": "^1.52.0",
+    "sqlite": "^5.1.1",
+    "sqlite3": "^5.1.7",
     "ts-jest": "^29.3.4"
+  },
+  "dependencies": {
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0"
   }
 }
