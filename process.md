@@ -9,59 +9,61 @@
 ### ステップ1：プロジェクトセットアップ & タイマーモジュール構築
 
 - **技術選定**
-    - Electron + React + TypeScript + Tailwind CSS
-    - SQLite＋sqlite3/sqlite ラッパー
+  - Electron + React + TypeScript + Tailwind CSS
+  - SQLite＋sqlite3/sqlite ラッパー
 - **タイマーコアロジック (TimerState)**
-    - ポモドーロタイマー（ワーク／休憩、サイクル数設定）
-    - pause/resume/reset の状態管理とコールバック設計
+  - ポモドーロタイマー（ワーク／休憩、サイクル数設定）
+  - pause/resume/reset の状態管理とコールバック設計
 - **ユニットテスト**
-    - TimerConfig, TimerState の E2E/ユニット
-    - Jest + Playwright テスト環境構築
+  - TimerConfig, TimerState の E2E/ユニット
+  - Jest + Playwright テスト環境構築
 
 ### ステップ2：UI コンポーネント & TDD
 
 - **コンポーネント作成**
-    - TimerDisplay, TimerControls, TimerSettings
+  - TimerDisplay, TimerControls, TimerSettings
 - **TypeScript 設定と型エラー修正**
-    - tsconfig.json、jest.config.js の調整
-    - global.d.ts で window.api 型定義
+  - tsconfig.json、jest.config.js の調整
+  - global.d.ts で window.api 型定義
 - **テスト駆動開発 (TDD)**
-    - JSX/TSX テストの型エラー解消
-    - Playwright E2E：Timer 操作シーケンス検証
+  - JSX/TSX テストの型エラー解消
+  - Playwright E2E：Timer 操作シーケンス検証
 
 ### ステップ3：ローカルデータ永続化 (SQLite DAO 層)
 
 - **DB スキーマ定義 (DDL)**
-    ```sql
-    CREATE TABLE work_sessions (
-        id TEXT PRIMARY KEY,
-        title TEXT,
-        started_at DATETIME,
-        ended_at DATETIME,
-        duration_minutes INTEGER,
-        tags TEXT,
-        created_at DATETIME DEFAULT (datetime('now'))
-    );
-    ```
+
+  ```sql
+  CREATE TABLE work_sessions (
+      id TEXT PRIMARY KEY,
+      title TEXT,
+      started_at DATETIME,
+      ended_at DATETIME,
+      duration_minutes INTEGER,
+      tags TEXT,
+      created_at DATETIME DEFAULT (datetime('now'))
+  );
+  ```
+
 - **Data Access Object (DAO)**
-    - getDb, saveSession, listSessions 実装
-    - JSON 形式でのタグ保存・復元
+  - getDb, saveSession, listSessions 実装
+  - JSON 形式でのタグ保存・復元
 - **ユニットテスト**
-    - メモリDB テスト：保存→取得→ソート順
-    - 空タグフォールバック(['未選択']) とタグ保持の検証
+  - メモリDB テスト：保存→取得→ソート順
+  - 空タグフォールバック(['未選択']) とタグ保持の検証
 
 ### ステップ4：Electron IPC ブリッジ
 
 - preload.ts で `contextBridge.exposeInMainWorld('api', …)` を実装
 - レンダラーから `window.api.saveSession` / `listSessions` を呼び出せるよう設定
 
-### ステップ5：記録モーダル & ナビゲーション
-
 - **SessionModal コンポーネント**
-    - タイトル入力、タグ付与、保存
+  - タイトル入力、タグ付与、保存
 - **App.tsx 統合**
-    - SessionModal 呼び出しタイミング (onCycleEnd)
-    - タブベースのビュー切り替え（Timer ↔ History）実装
+  - SessionModal 呼び出しタイミング (onCycleEnd)
+  - タブベースのビュー切り替え（Timer ↔ History）実装
+- **コンポーネントテスト**
+  - SessionModal, App のユニットテスト追加
 - **コンポーネントテスト**
     - SessionModal, App のユニットテスト追加
 
@@ -72,10 +74,10 @@
 ### ステップ6：履歴一覧表示 (HistoryList)
 
 - HistoryList コンポーネント作成
-- `window.api.listSessions()` でデータ取得
-- テーブル形式で日付・タイトル・所要時間・タグを一覧化
 - **単体テスト**
-    - モックデータでレンダリング検証
+  - モックデータでレンダリング検証
+- **E2E テスト**
+  - Timer → 保存 → History タブ → 該当行確認
 - **E2E テスト**
     - Timer → 保存 → History タブ → 該当行確認
 
