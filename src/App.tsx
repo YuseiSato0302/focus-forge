@@ -5,8 +5,13 @@ import { TimerDisplay } from './components/TimerDisplay';
 import { TimerControls } from './components/TimerControls';
 import { TimerSettings } from './components/TimerSettings';
 import { SessionModal } from './components/SessionModal';
+import { HistoryList } from './components/HistoryList';
 
-export const App: React.FC = () => {
+const App: React.FC = () => {
+  // ビュー切り替え: 'timer' または 'history'
+  const [view, setView] = useState<'timer' | 'history'>('timer');
+
+  // タイマー状態管理
   const [config, setConfig] = useState(new TimerConfig());
   const [remaining, setRemaining] = useState(0);
   const [currentCycle, setCurrentCycle] = useState(1);
@@ -31,12 +36,12 @@ export const App: React.FC = () => {
     })
   );
 
-  // Modal state
+  // モーダル管理
   const [isModalOpen, setModalOpen] = useState(false);
   const openModal = () => setModalOpen(true);
   const closeModal = () => setModalOpen(false);
 
-  // Save via preload API
+  // セッション保存ハンドラ
   const handleSave = async (title: string, tags: string[]) => {
     await window.api.saveSession({
       id: crypto.randomUUID(),
@@ -44,7 +49,7 @@ export const App: React.FC = () => {
       started_at: new Date(),
       ended_at: new Date(),
       duration_minutes: Math.ceil(remaining),
-      tags
+      tags,
     });
     closeModal();
   };
@@ -52,23 +57,44 @@ export const App: React.FC = () => {
   return (
     <div className="container mx-auto p-6">
       <h1 className="text-2xl font-bold mb-4">FocusForge</h1>
-      <TimerDisplay remainingSeconds={remaining} currentCycle={currentCycle} />
-      <TimerControls
-        isRunning={isRunning}
-        onStart={() => timer.start()}
-        onPause={() => timer.pause()}
-        onResume={() => timer.resume()}
-        onReset={() => timer.reset()}
-      />
-      <div className="mt-6">
-        <h2 className="text-xl font-semibold mb-2">Settings</h2>
-        <TimerSettings config={config} onChange={setConfig} />
+      {/* ナビゲーション */}
+      <div className="flex space-x-4 mb-6">
+        <button
+          onClick={() => setView('timer')}
+          className={
+            `px-4 py-2 rounded-t ${view === 'timer' ? 'bg-indigo-500 text-white' : 'bg-gray-200'}`
+          }
+        >Timer</button>
+        <button
+          onClick={() => setView('history')}
+          className={
+            `px-4 py-2 rounded-t ${view === 'history' ? 'bg-indigo-500 text-white' : 'bg-gray-200'}`
+          }
+        >履歴</button>
       </div>
-      <SessionModal
-        isOpen={isModalOpen}
-        onClose={closeModal}
-        onSave={handleSave}
-      />
+
+      {/* コンテンツ切り替え */}
+      {view === 'timer' ? (
+        <>
+          <TimerDisplay remainingSeconds={remaining} currentCycle={currentCycle} />
+          <TimerControls
+            isRunning={isRunning}
+            onStart={() => timer.start()}
+            onPause={() => timer.pause()}
+            onResume={() => timer.resume()}
+            onReset={() => timer.reset()}
+          />
+          <div className="mt-6">
+            <h2 className="text-xl font-semibold mb-2">Settings</h2>
+            <TimerSettings config={config} onChange={setConfig} />
+          </div>
+          <SessionModal isOpen={isModalOpen} onClose={closeModal} onSave={handleSave} />
+        </>
+      ) : (
+        <HistoryList />
+      )}
     </div>
   );
 };
+
+export default App;
