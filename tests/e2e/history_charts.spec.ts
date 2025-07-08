@@ -28,7 +28,19 @@ test.describe('FocusForge E2E - History Charts Flow', () => {
     await window.click('button:has-text("Start")');
     await window.click('button:has-text("Pause")');
     await window.click('button:has-text("Reset")');
-    await window.fill('label:has-text("タイトル"):right-of(input)', 'ChartTest');
+    // Locator をチェーンして input を特定
+    const titleInput = window
+      .locator('label:has-text("タイトル")') // タイトルラベル
+      .locator('..')                           // ラベルの親要素
+      .locator('input');                       // その中の input
+    await titleInput.fill('ChartTest');
+    const tagInput = window
+      .locator('label:has-text("タグ")')
+      .locator('..')
+      .locator('input');
+    await tagInput.fill('chartTag');
+    await window.click('button:has-text("追加")');
+
     await window.click('button:has-text("保存")');
   });
 
@@ -46,8 +58,7 @@ test.describe('FocusForge E2E - History Charts Flow', () => {
 
   test('タグ別グラフタブに円グラフが表示される', async () => {
     await window.click('button:has-text("タグ別グラフ")');
-    // 円グラフコンテナは1つ以上
-    const pieCharts = await window.locator('div.w-full.h-64 svg').count();
-    expect(pieCharts).toBeGreaterThanOrEqual(1);
+    const tagCharts = await window.locator('[data-testid="tag-chart"]').count();
+    expect(tagCharts).toBeGreaterThanOrEqual(1);
   });
 });
