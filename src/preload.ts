@@ -1,4 +1,4 @@
-import { contextBridge } from 'electron';
+import { contextBridge, ipcRenderer } from 'electron';
 import { Database } from 'sqlite';
 import { getDb, saveSession, listSessions, WorkSession } from './db';
 
@@ -32,3 +32,11 @@ contextBridge.exposeInMainWorld('api', {
     return listSessions(database);
   }
 });
+
+// レンダラープロセス向けの API を公開
+contextBridge.exposeInMainWorld('api', {
+  saveSession: (session: any) => ipcRenderer.invoke('save-session', session),
+  listSessions: () => ipcRenderer.invoke('list-sessions'),
+  saveCSV: (csvData: string) => ipcRenderer.invoke('save-csv', csvData),
+});
+

@@ -5,6 +5,7 @@ declare global {
     api: {
       saveSession: (session: WorkSession) => Promise<void>;
       listSessions: () => Promise<WorkSession[]>;
+      saveCSV: (csvData: string) => Promise<void>;
     };
   }
 }
