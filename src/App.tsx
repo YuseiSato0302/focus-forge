@@ -82,7 +82,7 @@ const App: React.FC = () => {
             onStart={() => timer.start()}
             onPause={() => timer.pause()}
             onResume={() => timer.resume()}
-            onReset={() => timer.reset()}
+            onReset={() => { timer.reset(); openModal(); }}
           />
           <div className="mt-6">
             <h2 className="text-xl font-semibold mb-2">Settings</h2>
